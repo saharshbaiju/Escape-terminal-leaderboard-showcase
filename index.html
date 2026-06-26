@@ -3,55 +3,51 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#020a02" />
+    <meta name="theme-color" content="#000000" />
     <title>Escape the Terminal — Leaderboard</title>
   </head>
   <body>
     <div class="stage">
       <header class="masthead">
-        <div class="mast-left">
-          <div class="mast-kicker">┌─ amFOSS // ESCAPE-THE-TERMINAL ─┐</div>
-          <div class="mast-title" data-text="LEADERBOARD">LEADERBOARD</div>
-          <div class="mast-rule">╾─────────◈ TOP&nbsp;OPERATIVES ◈─────────╼</div>
-        </div>
-        <div class="mast-right">
-          <div class="live"><span class="dot"></span> LIVE</div>
-          <div class="stat" id="count">0 RUNS</div>
-          <div class="stat clock" id="clock">--:--:--</div>
+        <pre class="title" id="title"></pre>
+        <div class="subbar">
+          <div class="sub">amFOSS · Escape the Terminal</div>
+          <div class="meta">
+            <span id="count">0 runs</span>
+            <span class="sep">/</span>
+            <span id="clock">--:--:--</span>
+          </div>
         </div>
       </header>
 
-      <section class="podium" id="podium"></section>
+      <section class="top3" id="top3"></section>
 
       <div class="list-head">
-        <span class="c-rank">RANK</span>
-        <span class="c-handle">HANDLE</span>
-        <span class="c-outcome">OUTCOME</span>
-        <span class="c-score">SCORE</span>
-        <span class="c-time">TIME</span>
+        <span class="c-rank">#</span>
+        <span class="c-handle">Handle</span>
+        <span class="c-outcome">Outcome</span>
+        <span class="c-score">Score</span>
+        <span class="c-time">Time</span>
       </div>
       <main class="board" id="board"></main>
-      <div class="empty" id="empty">⌁ awaiting the first escape ⌁</div>
+      <div class="empty" id="empty">No runs yet</div>
 
-      <footer class="ticker" id="ticker">▸ system idle — waiting for the first escape…</footer>
+      <footer class="footer">
+        <div class="latest" id="ticker">Waiting for the first escape</div>
+      </footer>
     </div>
 
-    <!-- QR: hover/click the button to reveal a join code bottom-right -->
-    <button class="qr-toggle" id="qr-toggle">▣ SCAN&nbsp;TO&nbsp;PLAY</button>
-    <div class="qr-panel" id="qr-panel" hidden>
-      <div class="qr-head">┌─ JOIN THE RUN ─┐</div>
-      <div class="qr-code" id="qr-code"></div>
-      <div class="qr-sub">scan to play &amp; take your<br />place on the leaderboard</div>
-      <div class="qr-url" id="qr-url"></div>
-    </div>
-
-    <!-- hero card for a newly arrived run -->
+    <!-- new-run highlight card -->
     <div class="hero-layer" id="hero-layer"></div>
 
-    <!-- CRT overlays -->
-    <div class="crt crt-scanlines"></div>
-    <div class="crt crt-vignette"></div>
-    <div class="crt crt-flicker"></div>
+    <!-- QR join -->
+    <button class="qr-toggle" id="qr-toggle">Scan to play</button>
+    <div class="qr-panel" id="qr-panel" hidden>
+      <div class="qr-head">Join the run</div>
+      <div class="qr-code" id="qr-code"></div>
+      <div class="qr-sub">Scan to play and take your place on the leaderboard</div>
+      <div class="qr-url" id="qr-url"></div>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

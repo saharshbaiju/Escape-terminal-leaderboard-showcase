@@ -1,6 +1,6 @@
-// Realtime leaderboard showcase. New runs arrive via Supabase realtime (with a
-// polling fallback), pop up as a hero card, then either take a podium seat (top
-// 3) or hop down the ranked list into place. Top 3 stay pinned as cards.
+// Realtime leaderboard for a stall TV. Solid/flat design (no CRT). New runs
+// arrive via Supabase realtime (+ polling fallback), flash a card, then take a
+// top-3 badge seat or hop into the ranked list. Top 3 stay pinned.
 import "./style.css";
 import {
   enabled,
@@ -9,6 +9,7 @@ import {
   fetchCount,
   subscribe,
 } from "./supabase.js";
+import { TITLE } from "./art.js";
 import QRCode from "qrcode";
 
 const RAW_N = import.meta.env.VITE_TOP_N;
@@ -16,7 +17,8 @@ const N = RAW_N && parseInt(RAW_N, 10) > 0 ? parseInt(RAW_N, 10) : Infinity;
 const MAX = 500;
 const PLAY_URL = import.meta.env.VITE_PLAY_URL || "https://escapeterminal.vercel.app/";
 
-const podiumEl = document.getElementById("podium");
+const titleEl = document.getElementById("title");
+const top3El = document.getElementById("top3");
 const board = document.getElementById("board");
 const heroLayer = document.getElementById("hero-layer");
 const emptyEl = document.getElementById("empty");
@@ -31,7 +33,7 @@ const queue = [];
 let busy = false;
 let autoScrollTimer = null;
 
-const MEDALS = ["🥇", "🥈", "🥉"];
+const RANK_CLASS = ["gold", "silver", "bronze"];
 
 // --- helpers ---------------------------------------------------------------
 function el(tag, cls, text) {
@@ -55,12 +57,8 @@ const badgeClass = (o) => BADGE[o] || "b-escaped";
 function sortAll() {
   all.sort((a, b) => b.score - a.score || a.total_seconds - b.total_seconds);
 }
-function scoreBar(score) {
-  const f = Math.round((Math.min(100, Math.max(0, score)) / 100) * 10);
-  return "▰".repeat(f) + "▱".repeat(10 - f);
-}
 function updateCount() {
-  countEl.textContent = `${countExact} RUN${countExact === 1 ? "" : "S"}`;
+  countEl.textContent = `${countExact} run${countExact === 1 ? "" : "s"}`;
 }
 function updateEmpty() {
   emptyEl.classList.toggle("hide", all.length > 0 || !enabled);
@@ -69,39 +67,44 @@ function setTicker(t) {
   tickerEl.textContent = t;
 }
 
-// --- podium (top 3, pinned) ------------------------------------------------
-function makePodiumCard(r, rankIdx) {
-  const card = el("div", "pcard p" + (rankIdx + 1));
-  card.dataset.id = r.id;
-  card.append(el("div", "medal", MEDALS[rankIdx] || ""));
-  card.append(el("div", "p-rank", `RANK #${rankIdx + 1}`));
-  card.append(el("div", "p-name", r.name));
-  const score = el("div", "p-score");
-  score.innerHTML = `${r.score}<small>/100</small>`;
-  card.append(score);
-  card.append(el("div", "p-bar", scoreBar(r.score)));
-  const badge = el("div", "p-badge " + badgeClass(r.outcome));
-  badge.textContent = r.outcome;
-  card.append(badge);
-  card.append(el("div", "p-time", "⏱ " + fmtTime(r.total_seconds)));
-  return card;
-}
-function renderPodium(newId) {
-  const top3 = all.slice(0, 3);
-  podiumEl.innerHTML = "";
-  // arrange as #2 · #1 · #3 so the champion sits centre
-  const order = top3.length === 3 ? [1, 0, 2] : top3.map((_, i) => i);
-  for (const idx of order) {
-    const r = top3[idx];
-    if (!r) continue;
-    const card = makePodiumCard(r, idx);
-    podiumEl.append(card);
-    if (r.id === newId) {
-      card.classList.add("pcard-flash");
-      card.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, easing: "ease-out" });
-      setTimeout(() => card.classList.remove("pcard-flash"), 4200);
-    }
+// --- title (ASCII block, fit to width) -------------------------------------
+function fitTitle() {
+  titleEl.textContent = TITLE;
+  titleEl.style.fontSize = "10px"; // measure at a known size, then scale
+  const avail = titleEl.clientWidth;
+  const natural = titleEl.scrollWidth;
+  if (natural > 0 && avail > 0) {
+    // target ~78% of the available width so the banner has breathing room
+    titleEl.style.fontSize = `${Math.max(6, Math.floor((10 * avail * 0.78) / natural))}px`;
   }
+}
+
+// --- top 3 (pinned, badge rows) --------------------------------------------
+function makeTop3Row(r, rankIdx) {
+  const row = el("div", "trow t" + (rankIdx + 1));
+  row.dataset.id = r.id;
+  row.append(el("div", "rbadge " + RANK_CLASS[rankIdx], String(rankIdx + 1)));
+  row.append(el("div", "t-handle", r.name));
+  const badge = el("div", "badge " + badgeClass(r.outcome));
+  badge.textContent = r.outcome;
+  row.append(badge);
+  row.append(el("div", "t-score", String(r.score)));
+  row.append(el("div", "t-time", fmtTime(r.total_seconds)));
+  return row;
+}
+function renderTop3(newId) {
+  const top3 = all.slice(0, 3);
+  top3El.innerHTML = "";
+  top3.forEach((r, i) => {
+    const row = makeTop3Row(r, i);
+    top3El.append(row);
+    if (r.id === newId) {
+      row.animate(
+        [{ opacity: 0, transform: "translateX(-12px)" }, { opacity: 1, transform: "none" }],
+        { duration: 450, easing: "ease-out" },
+      );
+    }
+  });
 }
 
 // --- ranked list (rank 4+) -------------------------------------------------
@@ -151,75 +154,45 @@ function renderListWithAnimation(newId) {
     if (id === newId) {
       descendAnimate(e, targetIndex, rowStep);
       e.classList.add("row-new");
-      setTimeout(() => e.classList.remove("row-new"), 7200);
+      setTimeout(() => e.classList.remove("row-new"), 5000);
     } else if (oldTops.has(id)) {
       const dy = oldTops.get(id) - e.offsetTop;
       if (dy) {
         e.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], {
-          duration: 650,
+          duration: 600,
           easing: "cubic-bezier(.2,.85,.25,1)",
         });
       }
     } else {
-      e.animate(
-        [
-          { opacity: 0, transform: `translateY(${rowStep}px)` },
-          { opacity: 1, transform: "none" },
-        ],
-        { duration: 500, easing: "ease-out" },
-      );
+      e.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: "ease-out" });
     }
   });
 }
-
 function descendAnimate(rowEl, targetIndex, rowStep) {
-  if (targetIndex <= 0 || rowStep <= 0) {
-    rowEl.animate([{ transform: "scale(1.2)" }, { transform: "scale(1)" }], {
-      duration: 600,
-      easing: "cubic-bezier(.34,1.56,.64,1)",
-    });
-    return;
-  }
-  rowEl.classList.add("row-descending");
+  if (targetIndex <= 0 || rowStep <= 0) return;
   const steps = Math.min(targetIndex, 8);
   const frames = [];
   for (let k = 0; k <= steps; k++) {
     const y = -(steps - k) * rowStep;
-    frames.push({ transform: `translateY(${y}px) scale(1.1)`, offset: k / steps });
+    frames.push({ transform: `translateY(${y}px)`, offset: k / steps });
     if (k < steps) {
       const y0 = -(steps - k) * rowStep;
       const y1 = -(steps - (k + 1)) * rowStep;
-      const yMid = (y0 + y1) / 2 - rowStep * 0.55;
-      frames.push({ transform: `translateY(${yMid}px) scale(1.0)`, offset: (k + 0.5) / steps });
+      const yMid = (y0 + y1) / 2 - rowStep * 0.4;
+      frames.push({ transform: `translateY(${yMid}px)`, offset: (k + 0.5) / steps });
     }
   }
-  const dur = Math.min(2200, Math.max(750, steps * 240));
-  const anim = rowEl.animate(frames, { duration: dur, easing: "linear" });
-  anim.onfinish = () => rowEl.classList.remove("row-descending");
+  const dur = Math.min(2000, Math.max(700, steps * 220));
+  rowEl.animate(frames, { duration: dur, easing: "linear" });
 }
 
 function renderAll() {
   sortAll();
-  renderPodium(null);
+  renderTop3(null);
   renderListPlain();
 }
 
-function staggerEntrance() {
-  [...podiumEl.children].forEach((e, i) =>
-    e.animate(
-      [{ opacity: 0, transform: "translateY(22px)" }, { opacity: 1, transform: "none" }],
-      { duration: 520, delay: i * 130, easing: "ease-out", fill: "backwards" },
-    ),
-  );
-  [...board.children].forEach((e, i) =>
-    e.animate(
-      [{ opacity: 0, transform: "translateY(18px)" }, { opacity: 1, transform: "none" }],
-      { duration: 420, delay: Math.min(i * 60, 1200), easing: "ease-out", fill: "backwards" },
-    ),
-  );
-}
-
-// --- hero card -------------------------------------------------------------
+// --- new-run card ----------------------------------------------------------
 function countUp(node, to, dur) {
   const start = performance.now();
   function step(t) {
@@ -246,30 +219,27 @@ function hero(row, globalRank) {
     heroLayer.append(card);
     card.animate(
       [
-        { opacity: 0, transform: "scale(.6)" },
-        { opacity: 1, transform: "scale(1.06)", offset: 0.7 },
+        { opacity: 0, transform: "scale(.85)" },
         { opacity: 1, transform: "scale(1)" },
       ],
-      { duration: 600, easing: "cubic-bezier(.34,1.56,.64,1)", fill: "forwards" },
+      { duration: 350, easing: "ease-out", fill: "forwards" },
     );
-    countUp(card.querySelector("#hv-score"), row.score, 900);
+    countUp(card.querySelector("#hv-score"), row.score, 800);
     setTimeout(() => {
-      const out = card.animate(
-        [
-          { opacity: 1, transform: "scale(1)" },
-          { opacity: 0, transform: "scale(.4) translateY(-12vh)" },
-        ],
-        { duration: 650, easing: "ease-in", fill: "forwards" },
-      );
+      const out = card.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: 400,
+        easing: "ease-in",
+        fill: "forwards",
+      });
       out.onfinish = () => {
         card.remove();
         resolve();
       };
-    }, 2200);
+    }, 2000);
   });
 }
 
-// --- queue (one animation at a time) ---------------------------------------
+// --- queue -----------------------------------------------------------------
 function enqueue(row) {
   if (!row || seen.has(row.id)) return;
   seen.add(row.id);
@@ -288,17 +258,16 @@ async function animateNew(row) {
   countExact += 1;
   updateCount();
   const globalRank = all.findIndex((r) => r.id === row.id);
-  setTicker(`▸ ${row.name} just escaped — ${row.outcome} · ${row.score} pts · rank #${globalRank + 1}`);
+  setTicker(`${row.name} escaped — ${row.outcome} · ${row.score} pts · #${globalRank + 1}`);
   await hero(row, globalRank);
   if (globalRank < 3) {
-    renderPodium(row.id);
-    renderListWithAnimation(null); // an old top-3 row may drop into the list
+    renderTop3(row.id);
+    renderListWithAnimation(null);
   } else {
-    renderPodium(null);
+    renderTop3(null);
     renderListWithAnimation(row.id);
   }
 }
-
 function handleDelete(old) {
   if (!old) return;
   const i = all.findIndex((r) => r.id === old.id);
@@ -309,7 +278,7 @@ function handleDelete(old) {
   updateCount();
 }
 
-// --- auto-scroll (hands-off TV) --------------------------------------------
+// --- auto-scroll -----------------------------------------------------------
 function startAutoScroll() {
   if (autoScrollTimer) return;
   autoScrollTimer = setInterval(() => {
@@ -321,13 +290,11 @@ function startAutoScroll() {
   }, 5000);
 }
 
-// --- poll fallback ---------------------------------------------------------
 async function poll() {
   const recent = await fetchRecent(20);
   recent.reverse().forEach((r) => enqueue(r));
 }
 
-// --- clock -----------------------------------------------------------------
 function startClock() {
   const tick = () => {
     clockEl.textContent = new Date().toLocaleTimeString([], { hour12: false });
@@ -336,7 +303,6 @@ function startClock() {
   setInterval(tick, 1000);
 }
 
-// --- QR "scan to play" -----------------------------------------------------
 async function setupQR() {
   const urlEl = document.getElementById("qr-url");
   const codeEl = document.getElementById("qr-code");
@@ -344,12 +310,12 @@ async function setupQR() {
   const panel = document.getElementById("qr-panel");
   urlEl.textContent = PLAY_URL.replace(/^https?:\/\//, "").replace(/\/$/, "");
   try {
-    const px = Math.max(160, Math.round(window.innerHeight * 0.22));
+    const px = Math.max(150, Math.round(window.innerHeight * 0.2));
     const canvas = document.createElement("canvas");
     await QRCode.toCanvas(canvas, PLAY_URL, {
       width: px,
       margin: 1,
-      color: { dark: "#04140a", light: "#e9fff0" },
+      color: { dark: "#000000", light: "#ffffff" },
     });
     codeEl.append(canvas);
   } catch {
@@ -364,6 +330,8 @@ async function setupQR() {
 
 // --- init ------------------------------------------------------------------
 async function init() {
+  fitTitle();
+  window.addEventListener("resize", fitTitle);
   startClock();
   setupQR();
   if (!enabled) {
@@ -385,14 +353,13 @@ async function init() {
   all = [...map.values()];
   renderAll();
   updateCount();
-  staggerEntrance();
   startAutoScroll();
 
   subscribe({
     onInsert: enqueue,
     onDelete: handleDelete,
     onStatus: (s) => {
-      if (s === "SUBSCRIBED") setTicker("▸ realtime online — waiting for the next escape…");
+      if (s === "SUBSCRIBED") setTicker("Connected — waiting for the next escape");
     },
   });
   setInterval(poll, 12000);
