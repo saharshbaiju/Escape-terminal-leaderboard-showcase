@@ -1,0 +1,369 @@
+/* =============================================================================
+   Escape the Terminal — realtime leaderboard showcase for a stall TV.
+   Landscape, green-phosphor CRT, sized in vh so it scales to any big screen.
+   ============================================================================= */
+:root {
+  --bg: #020a02;
+  --phosphor: #33ff66;
+  --green-dim: #2bd957;
+  --green-soft: #7cffb0;
+  --green-pale: #adffce;
+  --yellow: #ffd54a;
+  --gold: #ffd54a;
+  --silver: #d7e6df;
+  --bronze: #e0a060;
+  --orange: #ff9d5c;
+  --red: #ff5555;
+  --pink: #ff7adf;
+  --cyan: #4ad9ff;
+  --border: #1f7a3f;
+  --panel: #04140a;
+  /* one knob scales the whole UI to the screen height */
+  --u: 1.34vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: radial-gradient(ellipse at center, #061306 0%, #000 80%);
+  color: var(--phosphor);
+  overflow: hidden;
+  font-family: "DejaVu Sans Mono", "SF Mono", Menlo, Consolas, monospace;
+  text-shadow: 0 0 0.45em rgba(51, 255, 102, 0.4);
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--u) * 2.2) calc(var(--u) * 3);
+  z-index: 1;
+}
+
+/* ---- top bar ---- */
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: calc(var(--u) * 1.2);
+}
+.title-main {
+  display: block;
+  font-size: calc(var(--u) * 4.2);
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  color: var(--phosphor);
+}
+.title-sub {
+  display: block;
+  font-size: calc(var(--u) * 1.7);
+  color: var(--green-soft);
+  letter-spacing: 0.18em;
+  margin-top: calc(var(--u) * 0.4);
+}
+.status {
+  text-align: right;
+  font-size: calc(var(--u) * 1.9);
+}
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--red);
+  font-weight: bold;
+  letter-spacing: 0.2em;
+}
+.live .dot {
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0.8em var(--red);
+  animation: livepulse 1.4s ease-in-out infinite;
+}
+@keyframes livepulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+.count {
+  display: block;
+  color: var(--green-soft);
+  margin-top: calc(var(--u) * 0.4);
+}
+
+/* ---- column header + rows share this grid ---- */
+.cols,
+.row {
+  display: grid;
+  grid-template-columns: calc(var(--u) * 7) 1fr calc(var(--u) * 18) calc(var(--u) * 9) calc(var(--u) * 8);
+  align-items: center;
+  gap: calc(var(--u) * 1.5);
+}
+.cols {
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 1.8) calc(var(--u) * 0.6);
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: 0.22em;
+  color: var(--green-dim);
+}
+.col-label.score {
+  text-align: right;
+}
+
+/* ---- board ---- */
+.board {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.1);
+  overflow: hidden;
+  padding-top: calc(var(--u) * 0.6);
+}
+.row {
+  background: linear-gradient(90deg, rgba(8, 30, 16, 0.9), rgba(4, 18, 10, 0.6));
+  border: 1px solid var(--border);
+  border-radius: calc(var(--u) * 1.1);
+  padding: calc(var(--u) * 1.3) calc(var(--u) * 1.8);
+  font-size: calc(var(--u) * 2.6);
+  will-change: transform;
+}
+.row .rank {
+  font-weight: bold;
+  color: var(--green-soft);
+  font-size: calc(var(--u) * 2.4);
+}
+.row .handle {
+  font-weight: bold;
+  color: var(--green-pale);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row .score {
+  text-align: right;
+  font-weight: bold;
+  color: var(--phosphor);
+  font-variant-numeric: tabular-nums;
+}
+.row .time {
+  text-align: right;
+  color: var(--green-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* podium accents for the top three */
+.row.rank-1 {
+  border-color: var(--gold);
+  box-shadow: 0 0 calc(var(--u) * 2) rgba(255, 213, 74, 0.35);
+}
+.row.rank-1 .rank,
+.row.rank-1 .score {
+  color: var(--gold);
+}
+.row.rank-2 {
+  border-color: var(--silver);
+}
+.row.rank-2 .rank {
+  color: var(--silver);
+}
+.row.rank-3 {
+  border-color: var(--bronze);
+}
+.row.rank-3 .rank {
+  color: var(--bronze);
+}
+
+/* outcome badges */
+.badge {
+  justify-self: start;
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 1.1);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.b-clean {
+  color: var(--gold);
+}
+.b-escaped {
+  color: var(--phosphor);
+}
+.b-partial {
+  color: var(--yellow);
+}
+.b-lockdown {
+  color: var(--red);
+}
+.b-trapped {
+  color: var(--orange);
+}
+
+/* the freshly-arrived row glows for a while */
+.row.row-new {
+  animation: rowflash 2.4s ease-out 3;
+}
+@keyframes rowflash {
+  0%,
+  100% {
+    box-shadow: 0 0 calc(var(--u) * 1.5) rgba(51, 255, 102, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 calc(var(--u) * 3.5) rgba(51, 255, 102, 0.85);
+    border-color: var(--phosphor);
+  }
+}
+.row.row-descending {
+  z-index: 10;
+  box-shadow: 0 0 calc(var(--u) * 3.5) rgba(51, 255, 102, 0.8);
+  border-color: var(--phosphor);
+}
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--u) * 3);
+  color: var(--green-dim);
+  letter-spacing: 0.2em;
+  pointer-events: none;
+}
+.empty.hide {
+  display: none;
+}
+
+/* ---- ticker ---- */
+.ticker {
+  border-top: 1px solid var(--border);
+  margin-top: calc(var(--u) * 1);
+  padding-top: calc(var(--u) * 0.9);
+  font-size: calc(var(--u) * 1.7);
+  color: var(--cyan);
+  letter-spacing: 0.1em;
+  min-height: calc(var(--u) * 2.6);
+}
+
+/* =========================== HERO CARD =============================== */
+.hero-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.hero-card {
+  position: relative;
+  text-align: center;
+  padding: calc(var(--u) * 4) calc(var(--u) * 7);
+  background: radial-gradient(ellipse at center, #0a2614, #041a0c 75%);
+  border: 2px solid var(--phosphor);
+  border-radius: calc(var(--u) * 2);
+  box-shadow:
+    0 0 calc(var(--u) * 6) rgba(51, 255, 102, 0.55),
+    inset 0 0 calc(var(--u) * 3) rgba(51, 255, 102, 0.2);
+}
+.hero-tag {
+  font-size: calc(var(--u) * 2.4);
+  letter-spacing: 0.4em;
+  color: var(--yellow);
+  font-weight: bold;
+}
+.hero-name {
+  font-size: calc(var(--u) * 7);
+  font-weight: bold;
+  color: var(--green-pale);
+  margin: calc(var(--u) * 1.2) 0;
+  text-shadow: 0 0 0.5em rgba(51, 255, 102, 0.7);
+}
+.hero-badge {
+  display: inline-block;
+  margin-bottom: calc(var(--u) * 1.4);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 1.6);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: calc(var(--u) * 2);
+  letter-spacing: 0.15em;
+}
+.hero-stats {
+  display: flex;
+  gap: calc(var(--u) * 6);
+  justify-content: center;
+  margin-top: calc(var(--u) * 1.2);
+}
+.hero-stat .v {
+  font-size: calc(var(--u) * 5.5);
+  font-weight: bold;
+  color: var(--phosphor);
+  font-variant-numeric: tabular-nums;
+}
+.hero-stat .l {
+  font-size: calc(var(--u) * 1.6);
+  color: var(--green-soft);
+  letter-spacing: 0.2em;
+}
+.hero-rank .v {
+  color: var(--gold);
+}
+
+/* ---- CRT overlays ---- */
+.crt {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+.crt-scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.18) 3px,
+    rgba(0, 0, 0, 0.18) 4px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+}
+.crt-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0) 60%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+.crt-flicker {
+  animation: flicker 0.15s steps(2) infinite;
+}
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.025;
+    background: #000;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-flicker,
+  .live .dot {
+    animation: none;
+  }
+}

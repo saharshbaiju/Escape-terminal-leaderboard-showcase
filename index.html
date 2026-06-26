@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#020a02" />
+    <title>Escape the Terminal — Leaderboard</title>
+  </head>
+  <body>
+    <div class="stage">
+      <header class="topbar">
+        <div class="title">
+          <span class="title-main">ESCAPE&nbsp;THE&nbsp;TERMINAL</span>
+          <span class="title-sub">amFOSS lockdown terminal · live leaderboard</span>
+        </div>
+        <div class="status">
+          <span class="live"><span class="dot"></span>LIVE</span>
+          <span class="count" id="count">0 runs</span>
+        </div>
+      </header>
+
+      <div class="cols" id="cols">
+        <div class="col-label">RANK</div>
+        <div class="col-label">HANDLE</div>
+        <div class="col-label">OUTCOME</div>
+        <div class="col-label score">SCORE</div>
+        <div class="col-label">TIME</div>
+      </div>
+
+      <main class="board" id="board"></main>
+      <div class="empty" id="empty">Awaiting the first escape…</div>
+
+      <footer class="ticker" id="ticker"></footer>
+    </div>
+
+    <!-- hero card for a newly arrived run -->
+    <div class="hero-layer" id="hero-layer"></div>
+
+    <!-- CRT overlays -->
+    <div class="crt crt-scanlines"></div>
+    <div class="crt crt-vignette"></div>
+    <div class="crt crt-flicker"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
