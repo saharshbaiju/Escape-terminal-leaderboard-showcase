@@ -53,11 +53,13 @@ Import the repo as a **separate Vercel project**, set **Root Directory** to
 | `VITE_SUPABASE_URL` | your Supabase project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | publishable key (`sb_publishable_…`) |
 | `VITE_SUPABASE_TABLE` | `leaderboard` (optional) |
-| `VITE_TOP_N` | how many rows to show (optional, default `10`) |
+| `VITE_TOP_N` | rows to show (optional; **blank = all**, with scroll) |
 
 ## Notes
 
-- It keeps the top 100 in memory for correct ranking but shows `VITE_TOP_N` rows.
+- By default it shows **every run** (keeps up to 500 in memory), filling the
+  screen and auto-scrolling through the list (pausing during new-run animations).
+  Set `VITE_TOP_N` to a number to cap the visible rows instead.
 - Every finisher gets a hero card even if their score doesn't make the visible
   top-N (the card shows their real overall rank).
 - Admin deletes (from the desktop TUI) are reflected live too.

@@ -8,29 +8,41 @@
   </head>
   <body>
     <div class="stage">
-      <header class="topbar">
-        <div class="title">
-          <span class="title-main">ESCAPE&nbsp;THE&nbsp;TERMINAL</span>
-          <span class="title-sub">amFOSS lockdown terminal · live leaderboard</span>
+      <header class="masthead">
+        <div class="mast-left">
+          <div class="mast-kicker">┌─ amFOSS // ESCAPE-THE-TERMINAL ─┐</div>
+          <div class="mast-title" data-text="LEADERBOARD">LEADERBOARD</div>
+          <div class="mast-rule">╾─────────◈ TOP&nbsp;OPERATIVES ◈─────────╼</div>
         </div>
-        <div class="status">
-          <span class="live"><span class="dot"></span>LIVE</span>
-          <span class="count" id="count">0 runs</span>
+        <div class="mast-right">
+          <div class="live"><span class="dot"></span> LIVE</div>
+          <div class="stat" id="count">0 RUNS</div>
+          <div class="stat clock" id="clock">--:--:--</div>
         </div>
       </header>
 
-      <div class="cols" id="cols">
-        <div class="col-label">RANK</div>
-        <div class="col-label">HANDLE</div>
-        <div class="col-label">OUTCOME</div>
-        <div class="col-label score">SCORE</div>
-        <div class="col-label">TIME</div>
+      <section class="podium" id="podium"></section>
+
+      <div class="list-head">
+        <span class="c-rank">RANK</span>
+        <span class="c-handle">HANDLE</span>
+        <span class="c-outcome">OUTCOME</span>
+        <span class="c-score">SCORE</span>
+        <span class="c-time">TIME</span>
       </div>
-
       <main class="board" id="board"></main>
-      <div class="empty" id="empty">Awaiting the first escape…</div>
+      <div class="empty" id="empty">⌁ awaiting the first escape ⌁</div>
 
-      <footer class="ticker" id="ticker"></footer>
+      <footer class="ticker" id="ticker">▸ system idle — waiting for the first escape…</footer>
+    </div>
+
+    <!-- QR: hover/click the button to reveal a join code bottom-right -->
+    <button class="qr-toggle" id="qr-toggle">▣ SCAN&nbsp;TO&nbsp;PLAY</button>
+    <div class="qr-panel" id="qr-panel" hidden>
+      <div class="qr-head">┌─ JOIN THE RUN ─┐</div>
+      <div class="qr-code" id="qr-code"></div>
+      <div class="qr-sub">scan to play &amp; take your<br />place on the leaderboard</div>
+      <div class="qr-url" id="qr-url"></div>
     </div>
 
     <!-- hero card for a newly arrived run -->
